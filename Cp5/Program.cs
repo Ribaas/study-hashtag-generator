@@ -26,7 +26,7 @@ app.MapPost("/hashtags", async (HashtagRequest payload) =>
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:11434/api/generate");
         var prompt =
-            $"Generate a list of 2 hashtags for the given text. Respond using JSON (array of strings named hashtags). Text: {payload.text}.";
+            $"Generate a list of {count} hashtags for the given text. Respond using JSON (array of strings named hashtags). Text: {payload.text}.";
         var requestBody = new
         {
             model = model,
