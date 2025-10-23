@@ -4,7 +4,7 @@ namespace Cp5.Validators;
 
 public static class HashtagRequestValidator
 {
-    private static readonly string[] AvailableModels = { "gemma3:270m" };
+    private static readonly string[] AvailableModels = { "gemma3:270m", "gemma3:1b" };
 
     public static (bool isValid, ErrorResponse? error) Validate(HashtagRequest request)
     {
