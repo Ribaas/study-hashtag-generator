@@ -10,6 +10,16 @@ var MAX_HASHTAGS = 30;
 
 app.MapPost("/hashtags", async (HashtagRequest payload) =>
 {
+    if (payload.text == null || string.IsNullOrWhiteSpace(payload.text))
+    {
+        return Results.BadRequest("Text must not be null or empty.");
+    }
+    var text = payload.text.Trim();
+    if (string.IsNullOrWhiteSpace(text))
+    {
+        return Results.BadRequest("Text must not be empty or whitespace.");
+    }
+
     var model = string.IsNullOrWhiteSpace(payload.model) ? "gemma3:270m" : payload.model;
     if (!AVAILABLE_MODELS.Contains(model))
     {
@@ -32,7 +42,7 @@ app.MapPost("/hashtags", async (HashtagRequest payload) =>
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:11434/api/generate");
         var prompt =
-            $"Generate a list of {count} hashtags for the given text. Respond using JSON (array of strings named hashtags). Text: {payload.text}.";
+            $"Generate a list of {count} hashtags for the given text. Respond using JSON (array of strings named hashtags). Text: {text}.";
         var requestBody = new
         {
             model = model,
@@ -90,7 +100,6 @@ app.MapPost("/hashtags", async (HashtagRequest payload) =>
         }
 
 
-        // Log hashtags containing spaces and filter them out
         var hashtagsWithSpaces = hashtags?.Where(h => h != null && h.Contains(' ')).ToArray() ?? Array.Empty<string>();
         if (hashtagsWithSpaces.Length > 0)
         {
@@ -107,7 +116,6 @@ app.MapPost("/hashtags", async (HashtagRequest payload) =>
         Console.WriteLine(
             $"[Filtered hashtags count] {filteredHashtags.Length}, [Total unique hashtags so far] {allHashtags.Count + filteredHashtags.Count(h => !allHashtags.Contains(h))}");
 
-        // Add only new hashtags (avoid duplicates)
         foreach (var h in filteredHashtags)
         {
             if (!allHashtags.Contains(h))
@@ -117,7 +125,6 @@ app.MapPost("/hashtags", async (HashtagRequest payload) =>
         retries++;
     }
 
-    // If more than requested, trim
     if (allHashtags.Count > count)
     {
         allHashtags = allHashtags.Take(count).ToList();
