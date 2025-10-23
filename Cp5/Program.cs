@@ -6,6 +6,7 @@ var app = builder.Build();
 
 var AVAILABLE_MODELS = new string[] { "gemma3:270m" };
 var MAX_RETRIES = 10;
+var MAX_HASHTAGS = 30;
 
 app.MapPost("/hashtags", async (HashtagRequest payload) =>
 {
@@ -16,6 +17,11 @@ app.MapPost("/hashtags", async (HashtagRequest payload) =>
     }
 
     var count = payload.count <= 0 ? 10 : payload.count;
+    if (count > MAX_HASHTAGS)
+    {
+        count = MAX_HASHTAGS;
+        Console.WriteLine($"Requested count exceeds {MAX_HASHTAGS}. Limiting to {MAX_HASHTAGS} hashtags.");
+    }
 
     var client = new HttpClient();
     int retries = 0;
