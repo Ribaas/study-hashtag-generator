@@ -71,7 +71,18 @@ app.MapPost("/hashtags", async (HashtagRequest payload) =>
 		return Results.Ok(new { count, model, hashtags = Array.Empty<string>(), error = "Could not parse hashtags from Ollama response." });
 	}
 
-	return Results.Ok(new { count, model, hashtags });
+	// Log hashtags containing spaces and filter them out
+	var hashtagsWithSpaces = hashtags.Where(h => h != null && h.Contains(' ')).ToArray();
+	if (hashtagsWithSpaces.Length > 0)
+	{
+		Console.WriteLine($"Filtered out hashtags with spaces: {string.Join(", ", hashtagsWithSpaces)}");
+	}
+	var filteredHashtags = hashtags
+		.Where(h => !string.IsNullOrWhiteSpace(h) && !h.Contains(' '))
+		.Select(h => h.StartsWith("#") ? h : "#" + h)
+		.ToArray();
+
+	return Results.Ok(new { count, model, hashtags = filteredHashtags });
 });
 
 app.Run();
