@@ -1,145 +1,67 @@
 using Cp5;
-using System.Text.Json;
+using Cp5.Models;
+using Cp5.Services;
+using Cp5.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure services
+builder.Services.AddHttpClient<OllamaService>();
+builder.Services.AddScoped<HashtagGeneratorService>();
+
 var app = builder.Build();
 
-var AVAILABLE_MODELS = new string[] { "gemma3:270m" };
-var MAX_RETRIES = 10;
-var MAX_HASHTAGS = 30;
-
-app.MapPost("/hashtags", async (HashtagRequest payload) =>
+app.MapPost("/hashtags", async (
+    HashtagRequest request,
+    HashtagGeneratorService hashtagGenerator,
+    ILogger<Program> logger) =>
 {
-    if (payload.text == null || string.IsNullOrWhiteSpace(payload.text))
-    {
-        return Results.BadRequest("Text must not be null or empty.");
-    }
-    var text = payload.text.Trim();
-    if (string.IsNullOrWhiteSpace(text))
-    {
-        return Results.BadRequest("Text must not be empty or whitespace.");
-    }
+    logger.LogInformation("Received hashtag generation request");
 
-    var model = string.IsNullOrWhiteSpace(payload.model) ? "gemma3:270m" : payload.model;
-    if (!AVAILABLE_MODELS.Contains(model))
+    // Validate request
+    var (isValid, errorResponse) = HashtagRequestValidator.Validate(request);
+    if (!isValid)
     {
-        return Results.BadRequest($"Model '{model}' is not supported.");
+        logger.LogWarning("Invalid request: {Error}", errorResponse!.Error);
+        return Results.Json(errorResponse, statusCode: errorResponse.StatusCode);
     }
 
-    var count = payload.count <= 0 ? 10 : payload.count;
-    if (count > MAX_HASHTAGS)
+    var text = request.text.Trim();
+    var model = HashtagRequestValidator.GetModelOrDefault(request.model);
+    var count = request.count;
+
+    try
     {
-        count = MAX_HASHTAGS;
-        Console.WriteLine($"Requested count exceeds {MAX_HASHTAGS}. Limiting to {MAX_HASHTAGS} hashtags.");
+        // Generate hashtags
+        var (hashtags, error) = await hashtagGenerator.GenerateHashtagsAsync(text, model, count);
+
+        var response = new HashtagResponse(
+            Count: count,
+            Model: model,
+            Hashtags: hashtags,
+            Error: error
+        );
+
+        return Results.Ok(response);
     }
-
-    var client = new HttpClient();
-    int retries = 0;
-    var allHashtags = new List<string>();
-    string error = null;
-
-    while (allHashtags.Count < count && retries < MAX_RETRIES)
+    catch (HttpRequestException ex)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:11434/api/generate");
-        var prompt =
-            $"Generate a list of {count} hashtags for the given text. Respond using JSON (array of strings named hashtags). Text: {text}.";
-        var requestBody = new
-        {
-            model = model,
-            prompt = prompt,
-            stream = false,
-            format = new
-            {
-                type = "object",
-                properties = new
-                {
-                    hashtags = new
-                    {
-                        type = "array",
-                        items = new { type = "string" }
-                    }
-                },
-                required = new[] { "hashtags" }
-            }
-        };
-        var json = JsonSerializer.Serialize(requestBody);
-        request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-        var response = await client.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-
-        var ollamaResponse = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"[Ollama raw response] {ollamaResponse}");
-
-
-        string[] hashtags = null;
-        try
-        {
-            var doc = JsonDocument.Parse(ollamaResponse);
-            if (doc.RootElement.TryGetProperty("response", out var responseProp))
-            {
-                var hashtagsDoc = JsonDocument.Parse(responseProp.GetString());
-                if (hashtagsDoc.RootElement.TryGetProperty("hashtags", out var hashtagsProp) &&
-                    hashtagsProp.ValueKind == JsonValueKind.Array)
-                {
-                    hashtags = hashtagsProp.EnumerateArray().Select(e => e.GetString()).Where(s => s != null).ToArray();
-                }
-            }
-        }
-        catch
-        {
-            Console.WriteLine("Failed to parse hashtags from Ollama response.");
-            error = "Could not parse hashtags from Ollama response.";
-        }
-
-        Console.WriteLine($"[Ollama hashtags count] {hashtags?.Length ?? 0}");
-
-        if (hashtags == null)
-        {
-            retries++;
-            continue;
-        }
-
-
-        var hashtagsWithSpaces = hashtags?.Where(h => h != null && h.Contains(' ')).ToArray() ?? Array.Empty<string>();
-        if (hashtagsWithSpaces.Length > 0)
-        {
-            Console.WriteLine($"Filtered out hashtags with spaces: {string.Join(", ", hashtagsWithSpaces)}");
-        }
-
-        var filteredHashtags = hashtags == null
-            ? Array.Empty<string>()
-            : hashtags
-                .Where(h => !string.IsNullOrWhiteSpace(h) && !h.Contains(' '))
-                .Select(h => h.StartsWith("#") ? h : "#" + h)
-                .ToArray();
-
-        Console.WriteLine(
-            $"[Filtered hashtags count] {filteredHashtags.Length}, [Total unique hashtags so far] {allHashtags.Count + filteredHashtags.Count(h => !allHashtags.Contains(h))}");
-
-        foreach (var h in filteredHashtags)
-        {
-            if (!allHashtags.Contains(h))
-                allHashtags.Add(h);
-        }
-
-        retries++;
+        logger.LogError(ex, "Failed to connect to Ollama service");
+        var response = new ErrorResponse(
+            "Unable to connect to the AI service. Please ensure Ollama is running.",
+            StatusCodes.Status503ServiceUnavailable
+        );
+        return Results.Json(response, statusCode: response.StatusCode);
     }
-
-    if (allHashtags.Count > count)
+    catch (Exception ex)
     {
-        allHashtags = allHashtags.Take(count).ToList();
+        logger.LogError(ex, "Unexpected error during hashtag generation");
+        var response = new ErrorResponse(
+            "An unexpected error occurred while processing your request.",
+            StatusCodes.Status500InternalServerError
+        );
+        return Results.Json(response, statusCode: response.StatusCode);
     }
-
-    if (allHashtags.Count < count)
-    {
-        return Results.Ok(new
-        {
-            count, model, hashtags = allHashtags,
-            error = error ?? $"Could not generate the requested number of hashtags after {MAX_RETRIES} attempts."
-        });
-    }
-
-    return Results.Ok(new { count, model, hashtags = allHashtags });
 });
 
 app.Run();
