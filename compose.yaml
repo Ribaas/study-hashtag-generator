@@ -1,0 +1,6 @@
+﻿services:
+  cp5:
+    image: cp5
+    build:
+      context: .
+      dockerfile: Cp5/Dockerfile
