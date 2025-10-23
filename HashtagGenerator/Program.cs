@@ -1,7 +1,7 @@
-using Cp5;
-using Cp5.Models;
-using Cp5.Services;
-using Cp5.Validators;
+using HashtagGenerator;
+using HashtagGenerator.Models;
+using HashtagGenerator.Services;
+using HashtagGenerator.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 

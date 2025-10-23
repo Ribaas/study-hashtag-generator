@@ -1,4 +1,4 @@
-namespace Cp5.Services;
+namespace HashtagGenerator.Services;
 
 public class HashtagGeneratorService
 {

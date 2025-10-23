@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cp5", "Cp5\Cp5.csproj", "{0C49E834-9B88-4267-94C1-31A25D3887AC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HashtagGenerator", "HashtagGenerator\HashtagGenerator.csproj", "{0C49E834-9B88-4267-94C1-31A25D3887AC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{80184015-5B78-44A3-A78B-E18675E2E147}"
 	ProjectSection(SolutionItems) = preProject

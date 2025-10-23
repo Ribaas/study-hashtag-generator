@@ -1,3 +1,3 @@
-namespace Cp5.Models;
+namespace HashtagGenerator.Models;
 
 public record ErrorResponse(string Error, int StatusCode);

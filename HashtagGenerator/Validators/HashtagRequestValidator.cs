@@ -1,6 +1,6 @@
-using Cp5.Models;
+using HashtagGenerator.Models;
 
-namespace Cp5.Validators;
+namespace HashtagGenerator.Validators;
 
 public static class HashtagRequestValidator
 {

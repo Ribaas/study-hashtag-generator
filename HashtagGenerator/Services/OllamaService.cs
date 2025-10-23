@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Cp5.Models;
+using HashtagGenerator.Models;
 
-namespace Cp5.Services;
+namespace HashtagGenerator.Services;
 
 public class OllamaService
 {

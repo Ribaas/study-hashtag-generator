@@ -1,4 +1,4 @@
-namespace Cp5.Models;
+namespace HashtagGenerator.Models;
 
 public record OllamaRequest(
     string Model,
