@@ -18,7 +18,7 @@ public class HashtagGeneratorService
         _maxHashtags = configuration.GetValue<int>("HashtagGenerator:MaxHashtags", 30);
     }
 
-    public async Task<(List<string> hashtags, string? error)> GenerateHashtagsAsync(
+    public async Task<(List<string> hashtags, int normalizedCount, string? error)> GenerateHashtagsAsync(
         string text,
         string model,
         int requestedCount)
@@ -75,7 +75,7 @@ public class HashtagGeneratorService
             _logger.LogInformation("Successfully generated {Count} hashtags", finalHashtags.Count);
         }
 
-        return (finalHashtags, error);
+        return (finalHashtags, count, error);
     }
 
     private int NormalizeCount(int requestedCount)

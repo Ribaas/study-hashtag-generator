@@ -33,10 +33,10 @@ app.MapPost("/hashtags", async (
     try
     {
         // Generate hashtags
-        var (hashtags, error) = await hashtagGenerator.GenerateHashtagsAsync(text, model, count);
+        var (hashtags, normalizedCount, error) = await hashtagGenerator.GenerateHashtagsAsync(text, model, count);
 
         var response = new HashtagResponse(
-            Count: count,
+            Count: normalizedCount,
             Model: model,
             Hashtags: hashtags,
             Error: error
