@@ -1,0 +1,66 @@
+{
+	"info": {
+		"_postman_id": "765bb9f6-73ea-444e-a69f-6a69694bfa53",
+		"name": "HashtagGenerator",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13645312"
+	},
+	"item": [
+		{
+			"name": "Generate Hashtags",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"text\": \"Foi um fim de semana incrível com os amigos! 🎉 Entre risadas intermináveis, boa comida e muitas histórias compartilhadas, aproveitamos cada momento como se não houvesse amanhã. Saímos para explorar novos lugares, tiramos fotos engraçadas e voltamos para casa com a sensação de que esses momentos valem ouro. Nada melhor do que estar cercado de pessoas que fazem a vida ficar mais leve e divertida!\",\r\n    \"count\": 5,\r\n    \"model\": \"gemma3:1b\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/hashtags",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"hashtags"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": ""
+		}
+	]
+}
